@@ -1,0 +1,90 @@
+version: '3'
+services:
+  neo4j:
+    image: neo4j:3.5.26
+    environment:
+      - NEO4J_AUTH=neo4j/test
+    ulimits:
+      nofile:
+        soft: 40000
+        hard: 40000
+    ports:
+        - 7474:7474
+        - 7687:7687
+    volumes:
+      - ./.local/docker/neo4j/conf:/var/lib/neo4j/conf
+      - ./.local/docker/neo4j/plugins:/var/lib/neo4j/plugins
+      - ./.local/backup:/backup
+      - neo4j_data:/data
+    networks:
+      - amundsennet
+    user: 1000
+    group: 1000
+  elasticsearch:
+    image: elasticsearch:6.7.0
+    ports:
+        - 9200:9200
+    networks:
+      - amundsennet
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+  search:
+    build:
+      context: .
+      dockerfile: Dockerfile.search.public
+      target: oidc-release
+    ports:
+      - 5001:5001
+    depends_on:
+      - elasticsearch
+    networks:
+      - amundsennet
+    environment:
+      - PROXY_ENDPOINT=elasticsearch
+    command: gunicorn -w 2 --bind :5000 search_service.search_wsgi
+  metadata:
+    build:
+      context: .
+      dockerfile: Dockerfile.metadata.public
+    depends_on:
+      - neo4j
+    ports:
+      - 5002:5002
+    networks:
+      - amundsennet
+    environment:
+      - PROXY_HOST=bolt://neo4j
+    command: gunicorn -w 2 --bind :5000 metadata_service.metadata_wsgi
+  frontend:
+    build:
+      args:
+        SEARCHSERVICE_BASE: http://search:5001
+        METADATASERVICE_BASE: http://metadata:5002
+      context: .
+      dockerfile: Dockerfile.frontend.public
+      target: oidc-release
+    depends_on:
+      - metadata
+      - search
+    ports:
+      - 5000:5000
+    networks:
+      - amundsennet
+    environment:
+      - SEARCHSERVICE_BASE=http://search:5001
+      - METADATASERVICE_BASE=http://metadata:5002
+    env_file: '.env'
+    command: gunicorn -w 2 --bind :5000 amundsen_application.wsgi
+
+
+networks:
+  amundsennet:
+
+
+volumes:
+  es_data:
+  neo4j_data:
