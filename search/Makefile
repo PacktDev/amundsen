@@ -32,11 +32,19 @@ test: test_unit lint mypy isort_check
 
 .PHONY: image
 image:
-	cd .. && docker build -f Dockerfile.search.public -t ${IMAGE}:latest . && cd search
+	cd .. && docker build -f Dockerfile.search.public --target release -t ${IMAGE}:latest . && cd search
+
+.PHONY: image-oidc
+image-oidc:
+	cd .. && docker build -f Dockerfile.search.public --target oidc-release -t ${IMAGE}:oidc . && cd search
 
 .PHONY: image-version
 image-version:
-	cd .. && docker build -f Dockerfile.search.public -t ${IMAGE}:${VERSION} . && cd search
+	cd .. && docker build -f Dockerfile.search.public --target release -t ${IMAGE}:${VERSION} . && cd search
+
+.PHONY: image-oidc-version
+image-oidc:
+	cd .. && docker build -f Dockerfile.search.public --target oidc-release -t ${IMAGE}:oidc-${VERSION} . && cd search
 
 .PHONY: push-image-version
 push-image-version:
