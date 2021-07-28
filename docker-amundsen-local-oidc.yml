@@ -77,8 +77,6 @@ services:
       - METADATASERVICE_BASE=http://metadata:5002
     env_file: '.env'
     command: "gunicorn -w 2 --bind :5000 amundsen_application.wsgi"
-    tmpfs:
-      - /var/run
 
 
 networks:
