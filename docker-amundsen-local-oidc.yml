@@ -43,7 +43,7 @@ services:
       - amundsennet
     environment:
       - PROXY_ENDPOINT=elasticsearch
-    command: gunicorn -w 2 --bind :5000 search_service.search_wsgi
+    command: gunicorn -c /app/gunicorn.conf search_service.search_wsgi
   metadata:
     build:
       context: .
@@ -56,7 +56,7 @@ services:
       - amundsennet
     environment:
       - PROXY_HOST=bolt://neo4j
-    command: gunicorn -w 2 --bind :5000 metadata_service.metadata_wsgi
+    command: gunicorn -c /app/gunicorn.conf metadata_service.metadata_wsgi
   frontend:
     build:
       args:
@@ -76,7 +76,9 @@ services:
       - SEARCHSERVICE_BASE=http://search:5001
       - METADATASERVICE_BASE=http://metadata:5002
     env_file: '.env'
-    command: gunicorn -w 2 --bind :5000 amundsen_application.wsgi
+    command: "gunicorn -c /app/gunicorn.conf amundsen_application.wsgi"
+    tmpfs:
+      - /var/run
 
 
 networks:
