@@ -40,3 +40,4 @@ def get_auth_user(app: Flask) -> User:
 class OidcConfig(LocalConfig):
     AUTH_USER_METHOD = get_auth_user
     REQUEST_HEADERS_METHOD = get_access_headers
+    SERVER_NAME = os.getenv('SERVER_NAME', 'http://localhost:5000')
